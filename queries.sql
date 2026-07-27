@@ -63,3 +63,22 @@ WHERE day BETWEEN 1 AND 7
 GROUP BY address, 
          CASE WHEN len > 300 THEN 'Технический сбой' ELSE 'Штатный режим' END
 ORDER BY revenue_at_risk DESC;
+
+
+--ЗАПРОС 5. Сводные метрики по дням и платежным системам для Дашборда (ТЗ 3 и 4)
+SELECT 
+    -- Группируем по дням (с 3 по 7 сентября, как на графике)
+    DATE(time_payment) AS payment_date,
+    -- 1. Метрики для левого графика: количество транзакций и средний платёж
+    COUNT(id_transaction) AS total_transactions,
+    AVG(sum_payment) AS avg_payment_amount,
+    -- 2. Метрики для правого графика: сумма платежей в разрезе платежных систем
+    SUM(CASE WHEN payment_system = 'МИР' THEN sum_payment ELSE 0 END) AS revenue_mir,
+    SUM(CASE WHEN payment_system = 'Visa' THEN sum_payment ELSE 0 END) AS revenue_visa,
+    SUM(CASE WHEN payment_system = 'MasterCard' THEN sum_payment ELSE 0 END) AS revenue_mastercard,
+    -- Общая выручка за день
+    SUM(sum_payment) AS total_daily_revenue
+FROM data_table
+WHERE time_payment BETWEEN '2022-09-03' AND '2022-09-07'
+GROUP BY DATE(time_payment)
+ORDER BY payment_date ASC;
