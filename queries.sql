@@ -82,3 +82,28 @@ FROM data_table
 WHERE time_payment BETWEEN '2022-09-03' AND '2022-09-07'
 GROUP BY DATE(time_payment)
 ORDER BY payment_date ASC;
+
+
+-- ЗАПРОС 6. Финансовое моделирование затрат и расчет экономии (ТЗ 4)
+SELECT 
+    -- Предположим, что коды R_01, AM_01 лежат в колонке типа операции/товара
+    group_goods AS operation_type,
+    
+    -- Считаем количество операций по трем периодам/тарифам (как столбцы 1, 2, 3 на слайде)
+    COUNT(CASE WHEN day = 1 THEN id_transaction END) AS period_1_count,
+    COUNT(CASE WHEN day = 2 THEN id_transaction END) AS period_2_count,
+    COUNT(CASE WHEN day = 3 THEN id_transaction END) AS period_3_count,
+    
+    -- Расчет затрат: моделируем умножение тарифа на количество (пример логики калькулятора)
+    SUM(CASE WHEN day = 1 THEN sum_payment * 0.30 ELSE 0 END) AS cost_period_1,
+    SUM(CASE WHEN day = 2 THEN sum_payment * 0.50 ELSE 0 END) AS cost_period_2,
+    
+    -- Учет порогового значения и расчет экономии (зеленая зона на слайде)
+    CASE 
+        WHEN SUM(sum_payment) > 10000 THEN SUM(sum_payment) * 0.05 -- Скидка 5%, если превышен порог 10000
+        ELSE 0 
+    END AS calculated_economy
+FROM data_table
+WHERE day BETWEEN 1 AND 7
+GROUP BY group_goods
+ORDER BY period_2_count DESC;
